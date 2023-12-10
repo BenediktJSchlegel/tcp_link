@@ -1,0 +1,2 @@
+
+class TcpLinkException implements Exception{}
