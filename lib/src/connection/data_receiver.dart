@@ -1,28 +1,38 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:tcp_link/src/classes/data_collector.dart';
+import 'package:tcp_link/src/enums/handshake_response_status.dart';
 import 'package:tcp_link/src/payloads/interfaces/payload.dart';
 import 'package:tcp_link/src/serialization/payload_serializer.dart';
 
 import '../../tcp_link.dart';
+import '../classes/transfer_permission_handler.dart';
 import '../payloads/handshake_payload.dart';
 import '../payloads/responses/handshake_response_payload.dart';
 
-class HandshakeReceiver {
+class DataReceiver {
   final LinkLogger _logger;
   final PayloadSerializer _serializer;
   final int _port;
   final String _ip;
+  final bool _requestTransferPermission;
   final HandshakeResponsePayload Function(HandshakePayload payload) _onReceived;
+  final DataCollector _collector;
+  final TransferPermissionHandler _permissionHandler;
 
   ServerSocket? _socket;
 
-  HandshakeReceiver(
+  DataReceiver(
     this._ip,
     this._port,
     this._onReceived,
     this._serializer,
     this._logger,
+    this._collector,
+    this._requestTransferPermission,
+    this._permissionHandler,
   );
 
   void bind() async {
@@ -70,22 +80,40 @@ class HandshakeReceiver {
   void _handleDataReceived(Socket client, Uint8List data) {
     _logger.info("received data");
 
-    // TODO: Handle error while deserializing
-    Payload payload = _serializer.deserialize(data);
+    if (!_collector.containsIp(client.remoteAddress.address)) {
+      // TODO: Handle error while deserializing
+      Payload payload = _serializer.deserialize(data);
 
-    if (payload is HandshakePayload) {
-      // TODO: throw error -> bad payload
+      if (payload is! HandshakePayload) {
+        // TODO: throw error -> bad payload
+        throw Error();
+      }
+
+      if (_requestTransferPermission &&
+          !_permissionHandler.getPermission(payload)) {
+        client.add(_serializer.serialize(HandshakeResponsePayload(
+          _ip,
+          HandshakeResponseStatus.rejected,
+          DateTime.now(),
+        )));
+
+        return;
+      }
+
+      client.add(_serializer.serialize(HandshakeResponsePayload(
+        _ip,
+        HandshakeResponseStatus.ready,
+        DateTime.now(),
+      )));
+
+      _collector.prime(payload);
+      return;
     }
 
-    _logger.info("data deserialized");
-
-    final HandshakeResponsePayload response =
-        _onReceived(payload as HandshakePayload);
-
-    _logger.info("got response");
+    _collector.addData(client.remoteAddress.address, data);
 
     // TODO: Handle error when adding response
-    client.add(_serializer.serialize(response));
+    client.add(utf8.encode("next"));
 
     _logger.info("sent response");
   }

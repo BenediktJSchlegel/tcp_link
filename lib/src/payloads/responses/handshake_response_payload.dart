@@ -5,12 +5,10 @@ class HandshakeResponsePayload implements ResponsePayload {
   final String receiverIp;
   final HandshakeResponseStatus status;
   final DateTime timestamp;
-  final DateTime timout;
 
   HandshakeResponsePayload(
     this.receiverIp,
     this.status,
     this.timestamp,
-    this.timout,
   );
 }

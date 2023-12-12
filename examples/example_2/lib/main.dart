@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:tcp_link/tcp_link.dart';
 
@@ -39,11 +43,32 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: IconButton(
-          icon: const Icon(Icons.ac_unit),
-          onPressed: () {
-            LinkSender().test();
-          },
+        child: Column(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.ac_unit),
+              onPressed: () {
+                LinkSender().test();
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.file_copy),
+              onPressed: () async {
+                FilePickerResult? result =
+                    await FilePicker.platform.pickFiles(allowMultiple: false);
+
+                if (result != null) {
+                  File file =
+                      result.paths.map((path) => File(path!)).toList()[0];
+                  final Uint8List bytes = await file.readAsBytes();
+
+                  LinkSender().file(bytes);
+                } else {
+                  // User canceled the picker
+                }
+              },
+            ),
+          ],
         ),
       ),
     );

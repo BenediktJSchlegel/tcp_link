@@ -1,5 +1,5 @@
 enum ContentPayloadTypes {
   string,
-  object,
+  json,
   file,
 }

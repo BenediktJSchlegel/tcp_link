@@ -1,6 +1,4 @@
-
-enum HandshakeResponseStatus{
+enum HandshakeResponseStatus {
   rejected,
-  delayed,
   ready,
 }

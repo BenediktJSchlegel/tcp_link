@@ -1,18 +1,24 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 class LinkSender {
-  void test() async {
-    final Socket socket = await Socket.connect("192.168.0.60", 4567);
+  Socket? _socket;
 
-    socket.listen((event) {
-      print(utf8.decode(event));
-    });
+  void sendFile(File file) {
+    throw UnimplementedError();
+  }
 
-    socket.add(utf8.encode("test"));
+  void sendJson(Map<String, dynamic> data) {
+    // jsonEncode -> jsonDecode
+    throw UnimplementedError();
+  }
 
-    await Future.delayed(const Duration(seconds: 2));
+  void sendString(String data) {
+    throw UnimplementedError();
+  }
 
-    socket.close();
+  void close() {
+    _socket!.close();
   }
 }

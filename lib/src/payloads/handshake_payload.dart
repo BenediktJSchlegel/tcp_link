@@ -5,6 +5,7 @@ import '../enums/content_payload_types.dart';
 class HandshakePayload implements Payload {
   final String senderIp;
   final ContentPayloadTypes type;
+  final String? filename;
   final int contentLength;
   final DateTime timestamp;
 
@@ -13,5 +14,6 @@ class HandshakePayload implements Payload {
     this.type,
     this.contentLength,
     this.timestamp,
+    this.filename,
   );
 }
