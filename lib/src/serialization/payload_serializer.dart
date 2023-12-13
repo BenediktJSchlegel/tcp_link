@@ -1,22 +1,23 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:tcp_link/src/enums/content_payload_types.dart';
 import 'package:tcp_link/src/payloads/handshake_payload.dart';
-
-import '../payloads/interfaces/payload.dart';
+import 'package:tcp_link/src/payloads/responses/handshake_response_payload.dart';
 
 class PayloadSerializer {
-  Uint8List serialize(Payload payload) {
-    return utf8.encode("this is a payload");
+  Uint8List serialize(HandshakePayload payload) {
+    return utf8.encode(jsonEncode(payload.toMap()));
   }
 
-  Payload deserialize(Uint8List data) {
-    return HandshakePayload(
-      "senderIP",
-      ContentPayloadTypes.string,
-      100,
-      DateTime.now(),
-    );
+  HandshakePayload deserialize(Uint8List data) {
+    return HandshakePayload.fromMap(jsonDecode(utf8.decode(data)));
+  }
+
+  Uint8List serializeResponse(HandshakeResponsePayload payload) {
+    return utf8.encode(jsonEncode(payload.toMap()));
+  }
+
+  HandshakeResponsePayload deserializeResponse(Uint8List data) {
+    return HandshakeResponsePayload.fromMap(jsonDecode(utf8.decode(data)));
   }
 }

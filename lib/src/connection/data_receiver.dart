@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:tcp_link/src/classes/data_collector.dart';
 import 'package:tcp_link/src/enums/handshake_response_status.dart';
-import 'package:tcp_link/src/payloads/interfaces/payload.dart';
 import 'package:tcp_link/src/serialization/payload_serializer.dart';
 
 import '../../tcp_link.dart';
@@ -17,8 +16,6 @@ class DataReceiver {
   final PayloadSerializer _serializer;
   final int _port;
   final String _ip;
-  final bool _requestTransferPermission;
-  final HandshakeResponsePayload Function(HandshakePayload payload) _onReceived;
   final DataCollector _collector;
   final TransferPermissionHandler _permissionHandler;
 
@@ -27,11 +24,9 @@ class DataReceiver {
   DataReceiver(
     this._ip,
     this._port,
-    this._onReceived,
     this._serializer,
     this._logger,
     this._collector,
-    this._requestTransferPermission,
     this._permissionHandler,
   );
 
@@ -81,41 +76,42 @@ class DataReceiver {
     _logger.info("received data");
 
     if (!_collector.containsIp(client.remoteAddress.address)) {
-      // TODO: Handle error while deserializing
-      Payload payload = _serializer.deserialize(data);
-
-      if (payload is! HandshakePayload) {
-        // TODO: throw error -> bad payload
-        throw Error();
-      }
-
-      if (_requestTransferPermission &&
-          !_permissionHandler.getPermission(payload)) {
-        client.add(_serializer.serialize(HandshakeResponsePayload(
-          _ip,
-          HandshakeResponseStatus.rejected,
-          DateTime.now(),
-        )));
-
-        return;
-      }
-
-      client.add(_serializer.serialize(HandshakeResponsePayload(
-        _ip,
-        HandshakeResponseStatus.ready,
-        DateTime.now(),
-      )));
-
-      _collector.prime(payload);
-      return;
+      _handleHandshake(client, data);
+    } else {
+      _handleData(client, data);
     }
+  }
 
+  void _handleData(Socket client, Uint8List data) {
     _collector.addData(client.remoteAddress.address, data);
 
     // TODO: Handle error when adding response
     client.add(utf8.encode("next"));
 
     _logger.info("sent response");
+  }
+
+  void _handleHandshake(Socket client, Uint8List data) {
+    // TODO: Handle error while deserializing
+    HandshakePayload payload = _serializer.deserialize(data);
+
+    if (!_permissionHandler.getPermission(payload)) {
+      client.add(_serializer.serializeResponse(HandshakeResponsePayload(
+        _ip,
+        HandshakeResponseStatus.rejected,
+        DateTime.now(),
+      )));
+
+      return;
+    }
+
+    client.add(_serializer.serializeResponse(HandshakeResponsePayload(
+      _ip,
+      HandshakeResponseStatus.ready,
+      DateTime.now(),
+    )));
+
+    _collector.prime(payload);
   }
 
   bool _socketIsOpen() {
