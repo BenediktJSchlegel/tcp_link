@@ -1,0 +1,1 @@
+class HandshakeRejectedError extends Error {}

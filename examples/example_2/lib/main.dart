@@ -37,7 +37,11 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final LinkSender _sender;
 
-  _MyHomePageState() : _sender = LinkSender();
+  _MyHomePageState()
+      : _sender = LinkSender(
+          loggingConfiguration: LoggingConfiguration.print(LoggingVerbosity.info),
+          configuration: SenderConfiguration("192.168.0.60"),
+        );
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
               icon: const Icon(Icons.ac_unit),
               onPressed: () {
-                _sender.sendString("This is a test string");
+                _sender.sendString(SenderTarget("192.168.0.60", 4567), "This is a test string");
               },
             ),
             IconButton(
@@ -65,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   File file = result.paths.map((path) => File(path!)).toList()[0];
                   final Uint8List bytes = await file.readAsBytes();
 
-                  _sender.sendFile(file);
+                  _sender.sendFile(SenderTarget("192.168.0.60", 4567), file);
                 }
               },
             ),
