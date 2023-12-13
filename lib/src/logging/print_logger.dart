@@ -1,10 +1,9 @@
-import 'package:tcp_link/src/logging/link_logger.dart';
+import 'package:tcp_link/src/logging/interfaces/link_logger.dart';
 
 class PrintLogger implements LinkLogger {
-  @override
-  void debug(String message) {
-    print("DEBUG: ${DateTime.now()} - $message");
-  }
+  final LoggingVerbosity _verbosity;
+
+  PrintLogger(this._verbosity);
 
   @override
   void error(String message) {
@@ -12,17 +11,25 @@ class PrintLogger implements LinkLogger {
   }
 
   @override
+  void debug(String message) {
+    if (_verbosity == LoggingVerbosity.error) return;
+
+    print("DEBUG: ${DateTime.now()} - $message");
+  }
+
+  @override
   void info(String message) {
+    if (_verbosity == LoggingVerbosity.error || _verbosity == LoggingVerbosity.debug) return;
     print("INFO: ${DateTime.now()} - $message");
   }
 
   @override
   void log(String message, LoggingVerbosity verbose) {
     switch (verbose) {
-      case LoggingVerbosity.debug:
-        debug(message);
       case LoggingVerbosity.error:
         error(message);
+      case LoggingVerbosity.debug:
+        debug(message);
       case LoggingVerbosity.info:
         info(message);
     }

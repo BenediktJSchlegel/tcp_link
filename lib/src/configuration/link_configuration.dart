@@ -4,45 +4,28 @@ import 'package:tcp_link/src/configuration/constants/default_configuration_const
 @immutable
 class LinkConfiguration {
   final String _ip;
-  final int _handshakePort;
-  final int _contentPort;
-  final Duration _handshakeTimeout;
+  final int _port;
 
   /// * [ip] the ip-address of the calling device
   ///
-  /// * [handshakePort] the port that TCP Handshakes are performed on. Must be different from [contentPort]
-  ///
-  /// * [contentPort] the port that content is exchanged on. Must be different from [handshakePort]
+  /// * [port] the port that content is exchanged on. Must be different from [port]
   ///
   /// * [handshakeTimeout] the maximum amount of time the sender will attempts to establish a connection
   const LinkConfiguration({
     required String ip,
-    required int handshakePort,
-    required int contentPort,
+    required int port,
     Duration? handshakeTimeout,
   })  : _ip = ip,
-        _handshakeTimeout = handshakeTimeout ??
-            DefaultConfigurationConstants.defaultHandshakeTimeout,
-        _handshakePort = handshakePort,
-        _contentPort = contentPort;
+        _port = port;
 
   /// * [ip] the IP-Address of the calling device
-  ///
-  /// * [handshakeTimeout] the maximum amount of time the sender will attempts to establish a connection
   const LinkConfiguration.defaultPorts({
     required String ip,
     Duration? handshakeTimeout,
   })  : _ip = ip,
-        _handshakeTimeout = handshakeTimeout ??
-            DefaultConfigurationConstants.defaultHandshakeTimeout,
-        _handshakePort = DefaultConfigurationConstants.defaultHandshakePort,
-        _contentPort = DefaultConfigurationConstants.defaultContentPort;
+        _port = DefaultConfigurationConstants.defaultHandshakePort;
 
-  int get contentPort => _contentPort;
-
-  int get handshakePort => _handshakePort;
+  int get port => _port;
 
   String get ip => _ip;
-
-  Duration get handshakeTimeout => _handshakeTimeout;
 }

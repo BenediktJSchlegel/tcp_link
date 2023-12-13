@@ -4,14 +4,15 @@ import 'package:tcp_link/src/classes/received_file.dart';
 import 'package:tcp_link/src/classes/transfer_permission_handler.dart';
 import 'package:tcp_link/src/configuration/link_configuration.dart';
 import 'package:tcp_link/src/connection/data_receiver.dart';
-import 'package:tcp_link/src/logging/link_logger.dart';
-import 'package:tcp_link/src/logging/print_logger.dart';
+import 'package:tcp_link/src/logging/configuration/logging_configuration.dart';
+import 'package:tcp_link/src/logging/interfaces/link_logger.dart';
+import 'package:tcp_link/src/payloads/handshake_payload.dart';
 import 'package:tcp_link/src/serialization/payload_serializer.dart';
 
 class LinkReceiver {
-  final Function(String data) onStringReceived;
-  final Function(Map<String, dynamic> json) onJsonReceived;
-  final Function(ReceivedFile file) onFileReceived;
+  final void Function(String data)? _onStringReceived;
+  final void Function(Map<String, dynamic> json)? _onJsonReceived;
+  final void Function(ReceivedFile file)? _onFileReceived;
 
   final LinkConfiguration _configuration;
   final PayloadSerializer _serializer;
@@ -21,15 +22,19 @@ class LinkReceiver {
   DataReceiver? _handshakeReceiver;
   DataCollector? _dataCollector;
 
-  // TODO: inject logger
   LinkReceiver({
+    required bool Function(HandshakePayload payload) onTransferPermissionRequestedCallback,
+    required LoggingConfiguration loggingConfiguration,
     required LinkConfiguration config,
-    required this.onStringReceived,
-    required this.onJsonReceived,
-    required this.onFileReceived,
-  })  : _serializer = PayloadSerializer(),
-        _logger = PrintLogger(),
-        _permissionHandler = TransferPermissionHandler(),
+    required void Function(String)? onStringReceived,
+    required void Function(Map<String, dynamic>)? onJsonReceived,
+    required void Function(ReceivedFile)? onFileReceived,
+  })  : _onFileReceived = onFileReceived,
+        _onJsonReceived = onJsonReceived,
+        _onStringReceived = onStringReceived,
+        _serializer = PayloadSerializer(),
+        _logger = loggingConfiguration.logger,
+        _permissionHandler = TransferPermissionHandler(onTransferPermissionRequestedCallback),
         _configuration = config;
 
   void start() {
@@ -45,7 +50,7 @@ class LinkReceiver {
 
     _handshakeReceiver = DataReceiver(
       _configuration.ip,
-      _configuration.handshakePort,
+      _configuration.port,
       _serializer,
       _logger,
       _dataCollector!,
@@ -55,5 +60,17 @@ class LinkReceiver {
     _handshakeReceiver!.bind();
   }
 
-  void _onDataCompleted(CompletedData data) {}
+  void _onDataCompleted(CompletedData data) {
+    switch (data.runtimeType) {
+      case CompletedFileData file:
+        _onFileReceived?.call(ReceivedFile(file.bytes, file.filename));
+        break;
+      case CompletedStringData string:
+        _onStringReceived?.call(string.data);
+        break;
+      case CompletedJsonData json:
+        _onJsonReceived?.call(json.json);
+        break;
+    }
+  }
 }

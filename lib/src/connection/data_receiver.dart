@@ -96,22 +96,22 @@ class DataReceiver {
     HandshakePayload payload = _serializer.deserialize(data);
 
     if (!_permissionHandler.getPermission(payload)) {
-      client.add(_serializer.serializeResponse(HandshakeResponsePayload(
-        _ip,
-        HandshakeResponseStatus.rejected,
-        DateTime.now(),
-      )));
+      client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.rejected)));
 
       return;
     }
 
-    client.add(_serializer.serializeResponse(HandshakeResponsePayload(
-      _ip,
-      HandshakeResponseStatus.ready,
-      DateTime.now(),
-    )));
+    client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.ready)));
 
     _collector.prime(payload);
+  }
+
+  HandshakeResponsePayload _generateResponse(HandshakeResponseStatus status) {
+    return HandshakeResponsePayload(
+      _ip,
+      status,
+      DateTime.now(),
+    );
   }
 
   bool _socketIsOpen() {

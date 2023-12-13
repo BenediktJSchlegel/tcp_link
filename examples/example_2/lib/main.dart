@@ -35,6 +35,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final LinkSender _sender;
+
+  _MyHomePageState() : _sender = LinkSender();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
               icon: const Icon(Icons.ac_unit),
               onPressed: () {
-                LinkSender().test();
+                _sender.sendString("This is a test string");
               },
             ),
             IconButton(
@@ -58,13 +62,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     await FilePicker.platform.pickFiles(allowMultiple: false);
 
                 if (result != null) {
-                  File file =
-                      result.paths.map((path) => File(path!)).toList()[0];
+                  File file = result.paths.map((path) => File(path!)).toList()[0];
                   final Uint8List bytes = await file.readAsBytes();
 
-                  LinkSender().file(bytes);
-                } else {
-                  // User canceled the picker
+                  _sender.sendFile(file);
                 }
               },
             ),

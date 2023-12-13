@@ -34,12 +34,22 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
 
-    final receiver = LinkReceiver(
+    /*final receiver = LinkReceiver(
       const LinkConfiguration(
           contentPort: 4567,
           handshakePort: 4567,
           ip: "192.168.0.60",
           handshakeTimeout: Duration(seconds: 5)),
+      onTransferPermissionRequestedCallback: (HandshakePayload payload) {}, loggingConfiguration: null, config: null,
+    );*/
+
+    final receiver = LinkReceiver(
+      onTransferPermissionRequestedCallback: (payload) => true,
+      loggingConfiguration: LoggingConfiguration.print(LoggingVerbosity.info),
+      config: const LinkConfiguration(ip: "", port: 4567),
+      onStringReceived: (data) {},
+      onJsonReceived: (json) {},
+      onFileReceived: (file) {},
     );
 
     receiver.start();
