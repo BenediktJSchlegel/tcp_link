@@ -13,8 +13,11 @@ import 'package:tcp_link/src/serialization/payload_serializer.dart';
 
 import '../classes/data_send_result.dart';
 import '../configuration/sender_configuration.dart';
+import '../exceptions/handshake_ignored_exception.dart';
 
 class DataSender {
+  final Completer<DataSendResult> _completer = Completer<DataSendResult>();
+
   final SenderConfiguration _configuration;
   final PayloadSerializer _serializer;
   final LinkLogger _logger;
@@ -22,49 +25,87 @@ class DataSender {
   Socket? _socket;
   Uint8List? _data;
 
-  final Completer<DataSendResult> _completer = Completer<DataSendResult>();
+  bool _handshakeCompleted = false;
 
   DataSender(this._configuration, this._serializer, this._logger);
 
-  Future<DataSendResult> send(SenderTarget target, Uint8List data, ContentPayloadTypes type) async {
+  Future<DataSendResult> send(
+      SenderTarget target, Uint8List data, ContentPayloadTypes type, String? filename) async {
     _data = data;
+
+    _logger.info("Attempting to open socket at: ${target.ip}:${target.port}");
     _socket = await Socket.connect(target.ip, target.port);
+    _logger.info("opened socket at: ${target.ip}:${target.port}");
 
     _socket!.listen(_onDataReceived);
 
-    _socket!.add(_serializer.serialize(_buildPayload(type, data.length)));
+    _logger.info("adding handshake payload: ${target.ip}:${target.port}");
+    _socket!.add(_serializer.serialize(_buildPayload(type, data.length, filename)));
+    _logger.info("added handshake payload: ${target.ip}:${target.port}");
+
+    _startTimeout();
 
     // TODO: Test if this is how this works
     return _completer.future;
   }
 
-  HandshakePayload _buildPayload(ContentPayloadTypes type, int contentLength) {
+  void _startTimeout() {
+    Future.delayed(Duration(seconds: _configuration.timeout), () {
+      _logger.info("attempting to hit timeout");
+
+      if (!_handshakeCompleted) {
+        _logger.info("Timeout was hit");
+        _onTimeoutHit();
+      }
+    });
+  }
+
+  void _onTimeoutHit() {
+    _logger.info("Completing socket after ignored handshake");
+    _completer.complete(DataSendResult.failed(HandshakeIgnoredException()));
+  }
+
+  HandshakePayload _buildPayload(ContentPayloadTypes type, int contentLength, String? filename) {
     return HandshakePayload(
       _configuration.ip,
       type,
       contentLength,
       DateTime.now(),
-      "tempfilename",
-    ); // TODO: actually pass file name
+      filename,
+    );
   }
 
   void _onDataReceived(Uint8List data) {
-    // TODO:
-    // if first -> send actual payload
-    // if not -> ??
+    _logger.info("Received Response Data");
+
+    if (!_handshakeCompleted) {
+      _handshakeCompleted = true;
+
+      _completeHandshake(data);
+    }
+  }
+
+  void _completeHandshake(Uint8List data) {
+    _logger.info("Attempting to complete handshake");
+
     final HandshakeResponsePayload response = _serializer.deserializeResponse(data);
 
     if (response.status == HandshakeResponseStatus.rejected) {
-      _completer.complete(DataSendResult.failed(HandshakeRejectedError()));
+      _logger.info("Completing socket after rejected handshake");
+      _completer.complete(DataSendResult.failed(HandshakeRejectedException()));
       return;
     }
 
     _socket!.add(_data!);
 
+    _logger.info("Completing socket after success");
+
     _completer.complete(DataSendResult.success());
   }
 
   void close() {
+    _logger.info("Closing socket");
+
     _socket?.close();
   }
 }

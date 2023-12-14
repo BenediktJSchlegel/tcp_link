@@ -40,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   _MyHomePageState()
       : _sender = LinkSender(
           loggingConfiguration: LoggingConfiguration.print(LoggingVerbosity.info),
-          configuration: SenderConfiguration("192.168.0.60"),
+          configuration: SenderConfiguration("192.168.0.127", 10),
         );
 
   @override

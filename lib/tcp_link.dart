@@ -8,3 +8,4 @@ export 'src/logging/interfaces/link_logger.dart';
 export 'src/logging/configuration/logging_configuration.dart';
 export 'src/configuration/sender_configuration.dart';
 export 'src/classes/sender_target.dart';
+export 'src/classes/received_file.dart';

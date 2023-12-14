@@ -1,0 +1,1 @@
+class HandshakeIgnoredException implements Exception {}

@@ -1,8 +1,8 @@
 class DataSendResult {
-  final Error? _error;
+  final Exception? _error;
   final bool _successful;
 
-  DataSendResult.failed(Error error)
+  DataSendResult.failed(Exception error)
       : _error = error,
         _successful = false;
 
@@ -10,7 +10,7 @@ class DataSendResult {
       : _error = null,
         _successful = true;
 
-  Error? get error => _error;
+  Exception? get error => _error;
 
   bool get successful => _successful;
 }

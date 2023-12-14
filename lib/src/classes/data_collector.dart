@@ -37,7 +37,13 @@ class DataCollector {
         _caches[ip]!.handshake,
         _caches[ip]!.bytes,
       ));
+
+      _eject(ip);
     }
+  }
+
+  void _eject(String ip) {
+    _caches.removeWhere((key, value) => key == ip);
   }
 
   bool containsIp(String ip) => _caches.containsKey(ip);
@@ -49,8 +55,7 @@ class DataCollector {
       case ContentPayloadTypes.json:
         return jsonDecode(utf8.decode(bytes));
       case ContentPayloadTypes.file:
-        return CompletedFileData(
-            bytes, handshake.filename ?? "unknown_file_name");
+        return CompletedFileData(bytes, handshake.filename ?? "unknown_file_name");
     }
   }
 }

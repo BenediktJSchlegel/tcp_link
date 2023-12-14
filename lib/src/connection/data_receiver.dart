@@ -50,7 +50,7 @@ class DataReceiver {
 
   void close() async {
     if (_socketIsOpen()) {
-      _logger.info("closing handshake receiver");
+      _logger.info("closing receiver socket");
 
       await _socket!.close();
 
@@ -96,7 +96,8 @@ class DataReceiver {
     HandshakePayload payload = _serializer.deserialize(data);
 
     if (!_permissionHandler.getPermission(payload)) {
-      client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.rejected)));
+      client
+          .add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.rejected)));
 
       return;
     }

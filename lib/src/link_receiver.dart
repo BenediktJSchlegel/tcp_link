@@ -62,14 +62,14 @@ class LinkReceiver {
 
   void _onDataCompleted(CompletedData data) {
     switch (data.runtimeType) {
-      case CompletedFileData file:
-        _onFileReceived?.call(ReceivedFile(file.bytes, file.filename));
+      case CompletedFileData:
+        _onFileReceived?.call(ReceivedFile((data as CompletedFileData).bytes, data.filename));
         break;
-      case CompletedStringData string:
-        _onStringReceived?.call(string.data);
+      case CompletedStringData:
+        _onStringReceived?.call((data as CompletedStringData).data);
         break;
-      case CompletedJsonData json:
-        _onJsonReceived?.call(json.json);
+      case CompletedJsonData:
+        _onJsonReceived?.call((data as CompletedJsonData).json);
         break;
     }
   }

@@ -1,1 +1,1 @@
-class HandshakeRejectedError extends Error {}
+class HandshakeRejectedException implements Exception {}
