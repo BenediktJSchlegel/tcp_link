@@ -37,7 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final receiver = LinkReceiver(
       onTransferPermissionRequestedCallback: (payload) => true,
       loggingConfiguration: LoggingConfiguration.print(LoggingVerbosity.info),
-      config: const LinkConfiguration(ip: "192.168.0.60", port: 4567),
+      config: const LinkConfiguration(ip: "192.168.0.127", port: 4567),
       onStringReceived: (data) {
         print("STRING WAS RECEIVED!!! $data");
       },

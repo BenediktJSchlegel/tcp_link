@@ -40,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   _MyHomePageState()
       : _sender = LinkSender(
           loggingConfiguration: LoggingConfiguration.print(LoggingVerbosity.info),
-          configuration: SenderConfiguration("192.168.0.127", 10),
+          configuration: SenderConfiguration("192.168.0.60", 10),
         );
 
   @override
@@ -56,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
               icon: const Icon(Icons.ac_unit),
               onPressed: () {
-                _sender.sendString(SenderTarget("192.168.0.60", 4567), "This is a test string");
+                _sender.sendString(SenderTarget("192.168.0.127", 4567), "This is a test string");
               },
             ),
             IconButton(
@@ -69,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   File file = result.paths.map((path) => File(path!)).toList()[0];
                   final Uint8List bytes = await file.readAsBytes();
 
-                  _sender.sendFile(SenderTarget("192.168.0.60", 4567), file);
+                  _sender.sendFile(SenderTarget("192.168.0.127", 4567), file);
                 }
               },
             ),
