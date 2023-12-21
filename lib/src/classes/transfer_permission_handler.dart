@@ -1,11 +1,11 @@
 import 'package:tcp_link/src/payloads/handshake_payload.dart';
 
 class TransferPermissionHandler {
-  final bool Function(HandshakePayload payload) _onHandshakeReceived;
+  final Future<bool> Function(HandshakePayload payload) _onHandshakeReceived;
 
   TransferPermissionHandler(this._onHandshakeReceived);
 
-  bool getPermission(HandshakePayload payload) {
+  Future<bool> getPermission(HandshakePayload payload) async {
     return _onHandshakeReceived(payload);
   }
 }

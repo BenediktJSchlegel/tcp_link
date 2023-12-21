@@ -45,7 +45,6 @@ class DataSender {
 
     _startTimeout();
 
-    // TODO: Test if this is how this works
     return _completer.future;
   }
 
@@ -103,9 +102,10 @@ class DataSender {
     _completer.complete(DataSendResult.success());
   }
 
-  void close() {
+  Future<void> close() async {
     _logger.info("Closing socket");
 
-    _socket?.close();
+    await _socket?.flush();
+    await _socket?.close();
   }
 }

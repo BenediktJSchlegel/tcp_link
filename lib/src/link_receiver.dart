@@ -23,7 +23,7 @@ class LinkReceiver {
   DataCollector? _dataCollector;
 
   LinkReceiver({
-    required bool Function(HandshakePayload payload) onTransferPermissionRequestedCallback,
+    required Future<bool> Function(HandshakePayload payload) onTransferPermissionRequestedCallback,
     required LoggingConfiguration loggingConfiguration,
     required LinkConfiguration config,
     required void Function(String)? onStringReceived,

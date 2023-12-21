@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ffi';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:tcp_link/src/payloads/handshake_payload.dart';
@@ -15,13 +16,13 @@ class DataCollector {
 
   DataCollector(this._onDataCompleted);
 
-  void prime(HandshakePayload payload) {
+  void prime(HandshakePayload payload, Socket socket) {
     if (_caches.containsKey(payload.senderIp)) {
       // TODO throw better ex
       throw Exception();
     }
 
-    _caches[payload.senderIp] = DataCache(payload);
+    _caches[payload.senderIp] = DataCache(payload, socket);
   }
 
   void addData(String ip, Uint8List data) {
@@ -37,6 +38,8 @@ class DataCollector {
         _caches[ip]!.handshake,
         _caches[ip]!.bytes,
       ));
+
+      _caches[ip]?.socket.destroy();
 
       _eject(ip);
     }

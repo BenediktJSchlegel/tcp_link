@@ -91,11 +91,11 @@ class DataReceiver {
     _logger.info("sent response");
   }
 
-  void _handleHandshake(Socket client, Uint8List data) {
+  void _handleHandshake(Socket client, Uint8List data) async {
     // TODO: Handle error while deserializing
     HandshakePayload payload = _serializer.deserialize(data);
 
-    if (!_permissionHandler.getPermission(payload)) {
+    if (!(await _permissionHandler.getPermission(payload))) {
       client
           .add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.rejected)));
 
@@ -104,7 +104,7 @@ class DataReceiver {
 
     client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.ready)));
 
-    _collector.prime(payload);
+    _collector.prime(payload, client);
   }
 
   HandshakeResponsePayload _generateResponse(HandshakeResponseStatus status) {

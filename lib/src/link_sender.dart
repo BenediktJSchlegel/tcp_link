@@ -55,8 +55,8 @@ class LinkSender {
       [String? filename]) async {
     final sender = DataSender(_configuration, _payloadSerializer, _logger);
 
-    return await (sender.send(target, data, type, filename).then((value) {
-      sender.close();
+    return await (sender.send(target, data, type, filename).then((value) async {
+      await sender.close();
       return value;
     }));
   }
