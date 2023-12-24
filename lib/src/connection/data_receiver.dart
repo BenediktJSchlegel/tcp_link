@@ -82,8 +82,8 @@ class DataReceiver {
     }
   }
 
-  void _handleData(Socket client, Uint8List data) {
-    _collector.addData(client.remoteAddress.address, data);
+  void _handleData(Socket client, Uint8List data) async {
+    await _collector.addData(client.remoteAddress.address, data);
 
     // TODO: Handle error when adding response
     client.add(utf8.encode("next"));
@@ -102,9 +102,9 @@ class DataReceiver {
       return;
     }
 
-    client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.ready)));
+    await _collector.prime(payload, client);
 
-    _collector.prime(payload, client);
+    client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.ready)));
   }
 
   HandshakeResponsePayload _generateResponse(HandshakeResponseStatus status) {

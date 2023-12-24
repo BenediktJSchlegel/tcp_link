@@ -3,12 +3,12 @@ import 'dart:typed_data';
 abstract interface class CompletedData {}
 
 class CompletedFileData implements CompletedData {
-  final Uint8List _bytes;
+  final String _tempFilePath;
   final String _filename;
 
-  CompletedFileData(this._bytes, this._filename);
+  CompletedFileData(this._tempFilePath, this._filename);
 
-  Uint8List get bytes => _bytes;
+  String get tempFilePath => _tempFilePath;
 
   String get filename => _filename;
 }

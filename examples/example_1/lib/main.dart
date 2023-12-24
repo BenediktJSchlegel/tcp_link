@@ -145,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onFileReceived: (ReceivedFile file) {
           setState(() {
             _receivedData.add(ReceivedListItem("${_formatter.format(DateTime.now())} - File:",
-                "${file.filename} - ${file.bytes.length}"));
+                "${file.filename} - ${file.tempFilePath}"));
           });
         },
       );

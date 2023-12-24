@@ -10,7 +10,7 @@ class DataCache {
 
   DataCache(this._handshake, this._socket) : _bytes = List<int>.empty(growable: true);
 
-  void addData(Uint8List data) {
+  Future<void> addData(Uint8List data) async {
     _bytes.addAll(data);
   }
 
