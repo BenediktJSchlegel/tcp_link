@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:tcp_link/src/classes/data_collector.dart';
+import 'package:tcp_link/src/classes/permission_request.dart';
 import 'package:tcp_link/src/enums/handshake_response_status.dart';
 import 'package:tcp_link/src/serialization/payload_serializer.dart';
+import 'package:tcp_link/src/stream/receive/receive_event.dart';
 
 import '../../tcp_link.dart';
 import '../classes/transfer_permission_handler.dart';
@@ -95,7 +98,12 @@ class DataReceiver {
     // TODO: Handle error while deserializing
     HandshakePayload payload = _serializer.deserialize(data);
 
-    if (!(await _permissionHandler.getPermission(payload))) {
+    _permissionHandler.getPermission(PermissionRequest(
+      payload,
+      (p) => _onAccept(p, client),
+      (p) => _onRejected(p, client),
+    ));
+    /*if (!(await _permissionHandler.getPermission(payload))) {
       client
           .add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.rejected)));
 
@@ -104,7 +112,21 @@ class DataReceiver {
 
     await _collector.prime(payload, client);
 
+    client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.ready)));*/
+  }
+
+  void _onRejected(HandshakePayload payload, Socket client) {
+    client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.rejected)));
+  }
+
+  Stream<ReceiveEvent> _onAccept(HandshakePayload payload, Socket client) async* {
+    StreamController<ReceiveEvent> controller = StreamController();
+
+    await _collector.prime(payload, client, controller);
+
     client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.ready)));
+
+    yield* controller.stream;
   }
 
   HandshakeResponsePayload _generateResponse(HandshakeResponseStatus status) {

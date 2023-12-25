@@ -6,3 +6,4 @@
 4. Make sure memory gets freed correctly
 5. failed connections need to be removed from the data_collector
 6. a timeout for abandoned connections needs to exist on both ends
+7. inject buffer directory. remove path_provider dependency

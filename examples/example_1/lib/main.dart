@@ -79,41 +79,89 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
-  Future<bool> _onHandshakeReceived(HandshakePayload payload) async {
-    if (payload.type != ContentPayloadTypes.file) {
-      return true;
+  Future<void> _onHandshakeReceived(PermissionRequest request) async {
+    if (request.payload.type != ContentPayloadTypes.file) {
+      _acceptTransfer(request.accept.call());
     }
-
-    Completer<bool> completer = Completer();
 
     final AlertDialog dialog = AlertDialog(
       content: Text(
-          "Allow transfer from ${payload.senderIp}? Name: ${payload.filename} - Length: ${payload.contentLength}"),
+          "Allow transfer from ${request.payload.senderIp}? Name: ${request.payload.filename} - Length: ${request.payload.contentLength}"),
       icon: const Icon(Icons.file_copy),
       actions: [
         TextButton(
           child: const Text("No"),
           onPressed: () {
-            completer.complete(false);
             Navigator.pop(context);
+
+            request.reject();
           },
         ),
         TextButton(
           child: const Text("Yes"),
           onPressed: () {
-            completer.complete(true);
             Navigator.pop(context);
+
+            _acceptTransfer(request.accept.call());
           },
         ),
       ],
     );
 
     showDialog(context: context, builder: (_) => dialog);
+  }
 
-    return await completer.future;
+  void _acceptTransfer(Stream<ReceiveEvent> stream) {
+    stream.listen((event) {
+      print(event.runtimeType);
+
+      switch (event.runtimeType) {
+        case ProgressReceiveEvent:
+          break;
+        case FailedReceiveEvent:
+          break;
+        case DoneReceiveEvent:
+          _handleReceivedData((event as DoneReceiveEvent).data);
+          break;
+      }
+    });
+  }
+
+  void _handleReceivedData(CompletedData data) {
+    switch (data.runtimeType) {
+      case CompletedFileData:
+        final file = data as CompletedFileData;
+        _onFileReceived(file.filename, file.tempFilePath);
+        break;
+      case CompletedStringData:
+        _onStringReceived((data as CompletedStringData).data);
+        break;
+      case CompletedJsonData:
+        _onJsonReceived((data as CompletedJsonData).json);
+        break;
+    }
   }
 
   final DateFormat _formatter = DateFormat('dd.MM.yyyy hh:mm');
+
+  void _onStringReceived(String data) {
+    setState(() {
+      _receivedData.add(ReceivedListItem("${_formatter.format(DateTime.now())} - String:", data));
+    });
+  }
+
+  void _onJsonReceived(Map<String, dynamic> json) {
+    setState(() {
+      _receivedData
+          .add(ReceivedListItem("${_formatter.format(DateTime.now())} - Json:", jsonEncode(json)));
+    });
+  }
+
+  void _onFileReceived(String filename, String tempPath) {
+    setState(() {
+      _receivedData.add(ReceivedListItem("${_formatter.format(DateTime.now())} - File:", filename));
+    });
+  }
 
   void _startListening() async {
     if (Platform.isAndroid) {
@@ -127,27 +175,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (_ownIp != null) {
       _receiver = LinkReceiver(
-        onTransferPermissionRequestedCallback: (payload) => _onHandshakeReceived(payload),
+        onTransferPermissionRequestedCallback: (request) => _onHandshakeReceived(request),
         loggingConfiguration: LoggingConfiguration.print(LoggingVerbosity.info),
         config: LinkConfiguration(ip: _ownIp!, port: 4567),
-        onStringReceived: (String data) {
-          setState(() {
-            _receivedData
-                .add(ReceivedListItem("${_formatter.format(DateTime.now())} - String:", data));
-          });
-        },
-        onJsonReceived: (Map<String, dynamic> json) {
-          setState(() {
-            _receivedData.add(
-                ReceivedListItem("${_formatter.format(DateTime.now())} - Json:", jsonEncode(json)));
-          });
-        },
-        onFileReceived: (ReceivedFile file) {
-          setState(() {
-            _receivedData.add(ReceivedListItem("${_formatter.format(DateTime.now())} - File:",
-                "${file.filename} - ${file.tempFilePath}"));
-          });
-        },
       );
 
       _sender = LinkSender(

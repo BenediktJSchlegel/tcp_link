@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:path/path.dart' as Path;
 import 'package:path_provider/path_provider.dart';
 import 'package:tcp_link/src/classes/cache/data_cache.dart';
+import 'package:tcp_link/src/stream/receive/progress_receive_event.dart';
 
 class BufferedDataCache extends DataCache {
   late final File _file;
@@ -14,7 +15,7 @@ class BufferedDataCache extends DataCache {
 
   int _dataLength;
 
-  BufferedDataCache(super.handshake, super.socket) : _dataLength = 0;
+  BufferedDataCache(super.handshake, super.socket, super.controller) : _dataLength = 0;
 
   Future<void> open() async {
     Completer<IOSink> completer = Completer();
@@ -45,6 +46,8 @@ class BufferedDataCache extends DataCache {
   @override
   Future<void> addData(Uint8List data) async {
     _dataLength += data.length;
+
+    controller.add(ProgressReceiveEvent(_dataLength, handshake.contentLength));
 
     (await _sink).add(data);
   }

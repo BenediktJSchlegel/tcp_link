@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
@@ -5,31 +6,30 @@ import 'dart:typed_data';
 
 import 'package:tcp_link/src/classes/cache/buffered_data_cache.dart';
 import 'package:tcp_link/src/payloads/handshake_payload.dart';
+import 'package:tcp_link/src/stream/receive/done_receive_event.dart';
 
 import '../enums/content_payload_types.dart';
+import '../stream/receive/receive_event.dart';
 import 'completed_data.dart';
 import 'cache/data_cache.dart';
 
 class DataCollector {
-  final Function(CompletedData data) _onDataCompleted;
-
   final Map<String, DataCache> _caches = <String, DataCache>{};
 
-  DataCollector(this._onDataCompleted);
-
-  Future<void> prime(HandshakePayload payload, Socket socket) async {
+  Future<void> prime(
+      HandshakePayload payload, Socket socket, StreamController<ReceiveEvent> controller) async {
     if (_caches.containsKey(payload.senderIp)) {
       // TODO throw better ex
       throw Exception();
     }
 
     if (payload.type == ContentPayloadTypes.file) {
-      final bufferedCache = BufferedDataCache(payload, socket);
+      final bufferedCache = BufferedDataCache(payload, socket, controller);
       await bufferedCache.open();
 
       _caches[payload.senderIp] = bufferedCache;
     } else {
-      _caches[payload.senderIp] = DataCache(payload, socket);
+      _caches[payload.senderIp] = DataCache(payload, socket, controller);
     }
   }
 
@@ -42,7 +42,8 @@ class DataCollector {
     await _caches[ip]!.addData(data);
 
     if (_caches[ip]!.isComplete) {
-      _onDataCompleted.call(_prepareData(_caches[ip]!));
+      _caches[ip]!.controller.add(DoneReceiveEvent(_prepareData(_caches[ip]!)));
+      _caches[ip]!.controller.close();
       _caches[ip]?.socket.destroy();
 
       if (_caches[ip] is BufferedDataCache) {
