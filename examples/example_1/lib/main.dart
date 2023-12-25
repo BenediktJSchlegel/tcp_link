@@ -39,6 +39,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final DateFormat _formatter = DateFormat('dd.MM.yyyy hh:mm');
+
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
   final TextEditingController _ipController = TextEditingController();
@@ -49,6 +51,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   static const _targetKey = "target_key";
   static const _ipKey = "ip_key";
+
+  double _currentReceiveProgress = 0.0;
+  bool _progressOngoing = false;
 
   String? _ownIp;
   LinkReceiver? _receiver;
@@ -117,14 +122,56 @@ class _MyHomePageState extends State<MyHomePage> {
 
       switch (event.runtimeType) {
         case ProgressReceiveEvent:
+          if (!_progressOngoing) {
+            _progressOngoing = true;
+            _showProgressDialog();
+          }
+          final progressEvent = (event as ProgressReceiveEvent);
+
+          _currentReceiveProgress = progressEvent.progress / progressEvent.total;
+
+          try {
+            _dialogSetState?.call(() {});
+          } on Object catch (o) {
+            print(o);
+          }
           break;
         case FailedReceiveEvent:
           break;
         case DoneReceiveEvent:
           _handleReceivedData((event as DoneReceiveEvent).data);
+
+          _currentReceiveProgress = 0.0;
+          _progressOngoing = false;
+          _dialogSetState = null;
+
+          Navigator.of(context).pop();
           break;
       }
     });
+  }
+
+  StateSetter? _dialogSetState;
+
+  void _showProgressDialog() {
+    AlertDialog dialog = AlertDialog(
+      icon: const Icon(Icons.info_rounded),
+      title: const Text("Receiving Data . . ."),
+      content: StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
+        _dialogSetState = setState;
+
+        return SizedBox(
+          height: 25,
+          width: 100,
+          child: LinearProgressIndicator(
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.purple),
+            value: _currentReceiveProgress,
+          ),
+        );
+      }),
+    );
+
+    showDialog(context: context, builder: (_) => dialog);
   }
 
   void _handleReceivedData(CompletedData data) {
@@ -141,8 +188,6 @@ class _MyHomePageState extends State<MyHomePage> {
         break;
     }
   }
-
-  final DateFormat _formatter = DateFormat('dd.MM.yyyy hh:mm');
 
   void _onStringReceived(String data) {
     setState(() {
