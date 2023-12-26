@@ -7,7 +7,6 @@ import 'package:tcp_link/src/configuration/link_configuration.dart';
 import 'package:tcp_link/src/connection/data_receiver.dart';
 import 'package:tcp_link/src/logging/configuration/logging_configuration.dart';
 import 'package:tcp_link/src/logging/interfaces/link_logger.dart';
-import 'package:tcp_link/src/payloads/handshake_payload.dart';
 import 'package:tcp_link/src/serialization/payload_serializer.dart';
 
 class LinkReceiver {
@@ -37,7 +36,7 @@ class LinkReceiver {
   }
 
   void _startReceiving() {
-    _dataCollector = DataCollector();
+    _dataCollector = DataCollector(_configuration.bufferPath, _configuration.inactivityThreshold);
 
     _handshakeReceiver = DataReceiver(
       _configuration.ip,

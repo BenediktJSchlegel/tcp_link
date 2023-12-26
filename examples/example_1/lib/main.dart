@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:io' show Platform;
+import 'package:example_1/utils.dart';
 import 'package:intl/intl.dart';
 
 import 'package:example_1/received_list_item.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tcp_link/tcp_link.dart';
 
@@ -87,6 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _onHandshakeReceived(PermissionRequest request) async {
     if (request.payload.type != ContentPayloadTypes.file) {
       _acceptTransfer(request.accept.call());
+      return;
     }
 
     final AlertDialog dialog = AlertDialog(
@@ -117,15 +120,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _acceptTransfer(Stream<ReceiveEvent> stream) {
+    if (!_progressOngoing) {
+      _progressOngoing = true;
+      _showProgressDialog();
+    }
+
     stream.listen((event) {
       print(event.runtimeType);
 
       switch (event.runtimeType) {
         case ProgressReceiveEvent:
-          if (!_progressOngoing) {
-            _progressOngoing = true;
-            _showProgressDialog();
-          }
           final progressEvent = (event as ProgressReceiveEvent);
 
           _currentReceiveProgress = progressEvent.progress / progressEvent.total;
@@ -137,6 +141,15 @@ class _MyHomePageState extends State<MyHomePage> {
           }
           break;
         case FailedReceiveEvent:
+          _currentReceiveProgress = 0.0;
+          _progressOngoing = false;
+          _dialogSetState = null;
+
+          if (_isShowingAlert()) {
+            Navigator.of(context).pop();
+          }
+
+          _showErrorDialog();
           break;
         case DoneReceiveEvent:
           _handleReceivedData((event as DoneReceiveEvent).data);
@@ -145,13 +158,36 @@ class _MyHomePageState extends State<MyHomePage> {
           _progressOngoing = false;
           _dialogSetState = null;
 
-          Navigator.of(context).pop();
+          if (_isShowingAlert()) {
+            Navigator.of(context).pop();
+          }
           break;
       }
     });
   }
 
   StateSetter? _dialogSetState;
+
+  bool _isShowingAlert() {
+    return !(ModalRoute.of(context)?.isCurrent ?? false);
+  }
+
+  void _showErrorDialog() {
+    final AlertDialog dialog = AlertDialog(
+      title: const Text("Failed Receiving Data"),
+      icon: const Icon(Icons.error),
+      actions: [
+        TextButton(
+          child: const Text("Ok"),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ],
+    );
+
+    showDialog(context: context, builder: (_) => dialog);
+  }
 
   void _showProgressDialog() {
     AlertDialog dialog = AlertDialog(
@@ -202,9 +238,12 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _onFileReceived(String filename, String tempPath) {
+  void _onFileReceived(String filename, String tempPath) async {
+    final x = await File(tempPath).exists();
+
     setState(() {
-      _receivedData.add(ReceivedListItem("${_formatter.format(DateTime.now())} - File:", filename));
+      _receivedData.add(
+          ReceivedListItem("${_formatter.format(DateTime.now())} - File: $filename", tempPath));
     });
   }
 
@@ -222,7 +261,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _receiver = LinkReceiver(
         onTransferPermissionRequestedCallback: (request) => _onHandshakeReceived(request),
         loggingConfiguration: LoggingConfiguration.print(LoggingVerbosity.info),
-        config: LinkConfiguration(ip: _ownIp!, port: 4567),
+        config: LinkConfiguration(ip: _ownIp!, port: 4567, bufferPath: await _getBufferPath()),
       );
 
       _sender = LinkSender(
@@ -239,6 +278,16 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
+  Future<String> _getBufferPath() async {
+    if (Platform.isAndroid) {
+      return "/storage/emulated/0/Download/buffer";
+    } else if (Platform.isWindows) {
+      return "link-buffer\\buffer";
+    }
+
+    return (await getTemporaryDirectory()).path;
+  }
+
   void _stopListening() {
     _receiver?.stop();
 
@@ -253,13 +302,25 @@ class _MyHomePageState extends State<MyHomePage> {
     if (result != null && _targetIp != null) {
       File file = result.paths.map((path) => File(path!)).toList()[0];
 
+      _setPageLoading(true);
+
       DataSendResult sendResult = await _sender!.sendFile(SenderTarget(_targetIp!, 4567), file);
 
       _handleSendResult(sendResult);
     }
   }
 
+  void _setPageLoading(bool value) {
+    if (value) {
+      Utils(context).startLoading();
+    } else {
+      Utils(context).stopLoading();
+    }
+  }
+
   void _onSendPressed() async {
+    _setPageLoading(true);
+
     DataSendResult sendResult =
         await _sender!.sendString(SenderTarget(_targetIp!, 4567), _contentController.text);
 
@@ -271,6 +332,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _handleSendResult(DataSendResult result) {
+    _setPageLoading(false);
+
     if (!result.successful) {
       final AlertDialog dialog = AlertDialog(
         title: const Text("Failed Sending Data"),
@@ -315,13 +378,21 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     Row(
                       children: [
-                        Text(_receivedData[index].title,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                        Flexible(
+                          child: Text(
+                            _receivedData[index].title,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            softWrap: true,
+                          ),
+                        ),
                       ],
                     ),
                     Row(
                       children: [
-                        Text(_receivedData[index].content, style: const TextStyle(fontSize: 16)),
+                        Flexible(
+                          child: Text(_receivedData[index].content,
+                              style: const TextStyle(fontSize: 16), softWrap: true),
+                        ),
                       ],
                     )
                   ],

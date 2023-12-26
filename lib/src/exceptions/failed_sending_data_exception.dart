@@ -1,0 +1,1 @@
+class FailedSendingDataException implements Exception {}

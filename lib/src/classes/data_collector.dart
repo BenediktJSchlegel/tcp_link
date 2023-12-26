@@ -16,6 +16,11 @@ import 'cache/data_cache.dart';
 class DataCollector {
   final Map<String, DataCache> _caches = <String, DataCache>{};
 
+  final String _bufferDir;
+  final int _inactivityThreshold;
+
+  DataCollector(this._bufferDir, this._inactivityThreshold);
+
   Future<void> prime(
       HandshakePayload payload, Socket socket, StreamController<ReceiveEvent> controller) async {
     if (_caches.containsKey(payload.senderIp)) {
@@ -24,34 +29,45 @@ class DataCollector {
     }
 
     if (payload.type == ContentPayloadTypes.file) {
-      final bufferedCache = BufferedDataCache(payload, socket, controller);
-      await bufferedCache.open();
+      final bufferedCache = BufferedDataCache(
+        payload,
+        socket,
+        controller,
+        _closeCache,
+        _inactivityThreshold,
+      );
+
+      await bufferedCache.open(_bufferDir);
 
       _caches[payload.senderIp] = bufferedCache;
     } else {
-      _caches[payload.senderIp] = DataCache(payload, socket, controller);
+      _caches[payload.senderIp] = DataCache(
+        payload,
+        socket,
+        controller,
+        _closeCache,
+        _inactivityThreshold,
+      );
     }
   }
 
   Future<void> addData(String ip, Uint8List data) async {
     if (!_caches.containsKey(ip)) {
-      // TODO: throw better ex
-      throw Exception();
+      return;
     }
 
     await _caches[ip]!.addData(data);
 
     if (_caches[ip]!.isComplete) {
-      _caches[ip]!.controller.add(DoneReceiveEvent(_prepareData(_caches[ip]!)));
-      _caches[ip]!.controller.close();
-      _caches[ip]?.socket.destroy();
-
-      if (_caches[ip] is BufferedDataCache) {
-        (_caches[ip] as BufferedDataCache).close();
-      }
-
-      _eject(ip);
+      _closeCache(_caches[ip]!, DoneReceiveEvent(_prepareData(_caches[ip]!)));
     }
+  }
+
+  void _closeCache(DataCache cache, ReceiveEvent event) {
+    cache.controller.add(event);
+    cache.close();
+
+    _eject(cache.handshake.senderIp);
   }
 
   void _eject(String ip) {
@@ -67,8 +83,7 @@ class DataCollector {
       case ContentPayloadTypes.json:
         return jsonDecode(utf8.decode(cache.bytes));
       case ContentPayloadTypes.file:
-        return CompletedFileData(
-            (cache as BufferedDataCache).filePath, cache.handshake.filename ?? "unknown_file_name");
+        return CompletedFileData((cache as BufferedDataCache).filePath, cache.absolutePath);
     }
   }
 }
