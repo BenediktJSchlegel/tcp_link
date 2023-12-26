@@ -11,15 +11,8 @@ class PrintLogger implements LinkLogger {
   }
 
   @override
-  void debug(String message) {
-    if (_verbosity == LoggingVerbosity.error) return;
-
-    print("DEBUG: ${DateTime.now()} - $message");
-  }
-
-  @override
   void info(String message) {
-    if (_verbosity == LoggingVerbosity.error || _verbosity == LoggingVerbosity.debug) return;
+    if (_verbosity == LoggingVerbosity.error) return;
     print("INFO: ${DateTime.now()} - $message");
   }
 
@@ -28,8 +21,6 @@ class PrintLogger implements LinkLogger {
     switch (verbose) {
       case LoggingVerbosity.error:
         error(message);
-      case LoggingVerbosity.debug:
-        debug(message);
       case LoggingVerbosity.info:
         info(message);
     }

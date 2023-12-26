@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -35,7 +36,6 @@ class DataReceiver {
       close();
     }
 
-    // TODO: Handle error thrown when binding
     _logger.info("binding to port: $_port");
     _socket = await ServerSocket.bind(_ip, _port);
     _logger.info("bound to port: $_port");
@@ -60,12 +60,10 @@ class DataReceiver {
 
   void _handleError(Object error, StackTrace trace) {
     _logger.error(error.toString());
-    // TODO: Error handling
   }
 
   void _handleOnDone() {
     _logger.info("on done triggered");
-    // TODO: Do something here?
   }
 
   void _handleClientConnected(Socket client) {
@@ -85,26 +83,33 @@ class DataReceiver {
   void _handleData(Socket client, Uint8List data) async {
     await _collector.addData(client.remoteAddress.address, data);
 
-    // TODO: Handle error when adding response
     client.add(utf8.encode("next"));
 
     _logger.info("sent response");
   }
 
   void _handleHandshake(Socket client, Uint8List data) async {
-    // TODO: Handle error while deserializing
     HandshakePayload payload = _serializer.deserialize(data);
 
-    if (!(await _permissionHandler.getPermission(payload))) {
-      client
-          .add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.rejected)));
+    _permissionHandler.getPermission(PermissionRequest(
+      payload,
+      (p) => _onAccept(p, client),
+      (p) => _onRejected(p, client),
+    ));
+  }
 
-      return;
-    }
+  void _onRejected(HandshakePayload payload, Socket client) {
+    client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.rejected)));
+  }
 
-    await _collector.prime(payload, client);
+  Stream<ReceiveEvent> _onAccept(HandshakePayload payload, Socket client) async* {
+    StreamController<ReceiveEvent> controller = StreamController();
+
+    await _collector.prime(payload, client, controller);
 
     client.add(_serializer.serializeResponse(_generateResponse(HandshakeResponseStatus.ready)));
+
+    yield* controller.stream;
   }
 
   HandshakeResponsePayload _generateResponse(HandshakeResponseStatus status) {

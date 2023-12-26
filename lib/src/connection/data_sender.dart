@@ -13,7 +13,10 @@ import 'package:tcp_link/src/serialization/payload_serializer.dart';
 
 import '../classes/data_send_result.dart';
 import '../configuration/sender_configuration.dart';
+import '../exceptions/failed_sending_data_exception.dart';
+import '../exceptions/failed_sending_handshake_exception.dart';
 import '../exceptions/handshake_ignored_exception.dart';
+import '../exceptions/no_connection_exception.dart';
 
 class DataSender {
   final Completer<DataSendResult> _completer = Completer<DataSendResult>();
@@ -30,18 +33,36 @@ class DataSender {
   DataSender(this._configuration, this._serializer, this._logger);
 
   Future<DataSendResult> send(
-      SenderTarget target, Uint8List data, ContentPayloadTypes type, String? filename) async {
+    SenderTarget target,
+    Uint8List data,
+    ContentPayloadTypes type,
+    String? filename,
+  ) async {
     _data = data;
 
-    _logger.info("Attempting to open socket at: ${target.ip}:${target.port}");
-    _socket = await Socket.connect(target.ip, target.port);
-    _logger.info("opened socket at: ${target.ip}:${target.port}");
+    try {
+      _logger.info("Attempting to open socket at: ${target.ip}:${target.port}");
+
+      _socket = await Socket.connect(
+        target.ip,
+        target.port,
+        timeout: Duration(seconds: _configuration.timeout),
+      );
+
+      _logger.info("opened socket at: ${target.ip}:${target.port}");
+    } on SocketException catch (_) {
+      return DataSendResult.failed(NoConnectionException());
+    }
 
     _socket!.listen(_onDataReceived);
 
-    _logger.info("adding handshake payload: ${target.ip}:${target.port}");
-    _socket!.add(_serializer.serialize(_buildPayload(type, data.length, filename)));
-    _logger.info("added handshake payload: ${target.ip}:${target.port}");
+    try {
+      _logger.info("adding handshake payload: ${target.ip}:${target.port}");
+      _socket!.add(_serializer.serialize(_buildPayload(type, data.length, filename)));
+      _logger.info("added handshake payload: ${target.ip}:${target.port}");
+    } on Object catch (_) {
+      return DataSendResult.failed(FailedSendingHandshakeException());
+    }
 
     _startTimeout();
 
@@ -95,11 +116,14 @@ class DataSender {
       return;
     }
 
-    _socket!.add(_data!);
+    try {
+      _socket!.add(_data!);
+      _logger.info("Completing socket after success");
 
-    _logger.info("Completing socket after success");
-
-    _completer.complete(DataSendResult.success());
+      _completer.complete(DataSendResult.success());
+    } on Object catch (_) {
+      _completer.complete(DataSendResult.failed(FailedSendingDataException()));
+    }
   }
 
   Future<void> close() async {

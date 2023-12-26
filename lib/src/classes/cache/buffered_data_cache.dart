@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:path/path.dart' as Path;
-import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:tcp_link/src/classes/cache/data_cache.dart';
+import 'package:tcp_link/src/stream/receive/progress_receive_event.dart';
 
 class BufferedDataCache extends DataCache {
   late final File _file;
@@ -14,22 +14,26 @@ class BufferedDataCache extends DataCache {
 
   int _dataLength;
 
-  BufferedDataCache(super.handshake, super.socket) : _dataLength = 0;
+  BufferedDataCache(
+    super.handshake,
+    super.socket,
+    super.controller,
+    super.onTimeout,
+    super._inactivityThreshold,
+  ) : _dataLength = 0;
 
-  Future<void> open() async {
+  Future<void> open(String bufferDir) async {
     Completer<IOSink> completer = Completer();
     _sink = completer.future;
 
-    Directory tempDir = await getTemporaryDirectory();
-
-    _filePath = Path.join(
-      "/storage/emulated/0/Download", //tempDir.path,
-      "buffer",
+    _filePath = path.join(
+      bufferDir,
       handshake.timestamp.toIso8601String(),
       handshake.filename,
     );
 
-    final file = File(_filePath.replaceAll(":", "").replaceAll(".", "").replaceAll(",", ""));
+    final file = File(_filePath.replaceAll(":", "").replaceAll(",", ""));
+
     _file = await file.create(recursive: true, exclusive: true);
 
     final sink = _file.openWrite(mode: FileMode.writeOnlyAppend, encoding: utf8);
@@ -37,14 +41,25 @@ class BufferedDataCache extends DataCache {
     completer.complete(sink);
   }
 
-  Future<void> close() async {
+  @override
+  void close() {
+    super.close();
+
+    _closeSink();
+  }
+
+  Future<void> _closeSink() async {
     await (await _sink).flush();
     await (await _sink).close();
   }
 
   @override
   Future<void> addData(Uint8List data) async {
+    lastActivity = DateTime.now();
+
     _dataLength += data.length;
+
+    controller.add(ProgressReceiveEvent(_dataLength, handshake.contentLength));
 
     (await _sink).add(data);
   }
@@ -55,4 +70,6 @@ class BufferedDataCache extends DataCache {
   }
 
   String get filePath => _filePath;
+
+  String get absolutePath => _file.absolute.path;
 }

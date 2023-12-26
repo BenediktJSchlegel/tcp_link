@@ -1,0 +1,29 @@
+name: tcp_link_example
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.1 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  network_info_plus: ^4.1.0
+  file_picker: ^6.1.1
+  shared_preferences: ^2.2.2
+  intl: ^0.19.0
+  path_provider: ^2.1.1
+
+
+  tcp_link:
+    path: ../../
+
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
