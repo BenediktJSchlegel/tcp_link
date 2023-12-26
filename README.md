@@ -52,6 +52,8 @@ receiver.start();
   }
 ```
 
+## Example App
+
 <img alt="img_1.png" height="500" src="img_1.png"/>
 
 <img alt="img_2.png" height="500" src="img_2.png"/>
