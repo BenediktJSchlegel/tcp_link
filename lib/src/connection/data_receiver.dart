@@ -35,7 +35,6 @@ class DataReceiver {
       close();
     }
 
-    // TODO: Handle error thrown when binding
     _logger.info("binding to port: $_port");
     _socket = await ServerSocket.bind(_ip, _port);
     _logger.info("bound to port: $_port");
@@ -83,14 +82,12 @@ class DataReceiver {
   void _handleData(Socket client, Uint8List data) async {
     await _collector.addData(client.remoteAddress.address, data);
 
-    // TODO: Handle error when adding response
     client.add(utf8.encode("next"));
 
     _logger.info("sent response");
   }
 
   void _handleHandshake(Socket client, Uint8List data) async {
-    // TODO: Handle error while deserializing
     HandshakePayload payload = _serializer.deserialize(data);
 
     _permissionHandler.getPermission(PermissionRequest(

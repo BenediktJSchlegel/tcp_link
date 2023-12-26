@@ -26,15 +26,21 @@ class LinkReceiver {
         _configuration = config;
 
   void start() {
+    _logger.info("Starting receiver");
     _startReceiving();
   }
 
   void stop() {
+    _logger.info("Stopping receiver");
     _receiver?.close();
   }
 
   void _startReceiving() {
-    _dataCollector = DataCollector(_configuration.bufferPath, _configuration.inactivityThreshold);
+    _dataCollector = DataCollector(
+      _logger,
+      _configuration.bufferPath,
+      _configuration.inactivityThreshold,
+    );
 
     _receiver = DataReceiver(
       _configuration.ip,

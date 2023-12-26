@@ -23,6 +23,8 @@ class LinkSender {
         _configuration = configuration;
 
   Future<DataSendResult> sendFile(SenderTarget target, File file) async {
+    _logger.info("Sending File");
+
     return _sendData(
       target,
       await _serializer.serializeFile(file),
@@ -32,6 +34,8 @@ class LinkSender {
   }
 
   Future<DataSendResult> sendMap(SenderTarget target, Map<String, dynamic> data) async {
+    _logger.info("Sending Map");
+
     return _sendData(
       target,
       _serializer.serializeMap(data),
@@ -40,6 +44,8 @@ class LinkSender {
   }
 
   Future<DataSendResult> sendString(SenderTarget target, String data) async {
+    _logger.info("Sending String");
+
     return _sendData(
       target,
       _serializer.serializeString(data),
