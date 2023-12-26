@@ -1,6 +1,7 @@
 name: tcp_link
 description: "Simplified TCP/IP Communication"
 version: 1.0.0
+repository: https://github.com/BenediktJSchlegel/tcp_link
 
 environment:
   sdk: '>=3.2.1 <4.0.0'

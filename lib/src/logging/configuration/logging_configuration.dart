@@ -4,22 +4,16 @@ import 'package:tcp_link/src/logging/print_logger.dart';
 
 class LoggingConfiguration {
   final LinkLogger _logger;
-  final LoggingVerbosity _verbosity;
 
   /// Creates a LoggingConfiguration that defines no logger
-  LoggingConfiguration.none()
-      : _logger = NoLogger(),
-        _verbosity = LoggingVerbosity.error;
+  LoggingConfiguration.none() : _logger = NoLogger();
 
   /// Creates a LoggingConfiguration that defines a basic print logger
-  LoggingConfiguration.print(LoggingVerbosity verbosity)
-      : _logger = PrintLogger(verbosity),
-        _verbosity = verbosity;
+  LoggingConfiguration.print(LoggingVerbosity verbosity) : _logger = PrintLogger(verbosity);
 
   /// Creates a LoggingConfiguration using the given [customLogger]
   LoggingConfiguration.custom(LoggingVerbosity verbosity, LinkLogger customLogger)
-      : _logger = customLogger,
-        _verbosity = verbosity;
+      : _logger = customLogger;
 
   /// The logger used within the library
   LinkLogger get logger => _logger;
