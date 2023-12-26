@@ -7,6 +7,7 @@ import 'package:tcp_link/src/logging/configuration/logging_configuration.dart';
 import 'package:tcp_link/src/logging/interfaces/link_logger.dart';
 import 'package:tcp_link/src/serialization/payload_serializer.dart';
 
+/// The main library entrypoint for listening
 class LinkReceiver {
   final LinkConfiguration _configuration;
   final PayloadSerializer _serializer;
@@ -25,11 +26,13 @@ class LinkReceiver {
         _permissionHandler = TransferPermissionHandler(onTransferPermissionRequestedCallback),
         _configuration = config;
 
+  /// Starts the receiver.
   void start() {
     _logger.info("Starting receiver");
     _startReceiving();
   }
 
+  /// Stops the listener, releasing all claimed resources in the process.
   void stop() {
     _logger.info("Stopping receiver");
     _receiver?.close();

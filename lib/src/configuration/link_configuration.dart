@@ -43,11 +43,15 @@ class LinkConfiguration {
         _bufferPath = bufferPath,
         _inactivityThreshold = inactivityThreshold;
 
+  /// The port that data is exchanged on
   int get port => _port;
 
+  /// The ip-address of the calling device
   String get ip => _ip;
 
+  /// The path to which files are buffered
   String get bufferPath => _bufferPath;
 
+  /// The amount of seconds it takes for a connection to be considered abandoned
   int get inactivityThreshold => _inactivityThreshold;
 }

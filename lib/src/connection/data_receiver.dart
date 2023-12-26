@@ -9,6 +9,7 @@ import 'package:tcp_link/src/serialization/payload_serializer.dart';
 
 import '../../tcp_link.dart';
 import '../classes/transfer_permission_handler.dart';
+import '../payloads/handshake_payload.dart';
 import '../payloads/responses/handshake_response_payload.dart';
 
 class DataReceiver {

@@ -22,6 +22,7 @@ class LinkSender {
         _payloadSerializer = PayloadSerializer(),
         _configuration = configuration;
 
+  /// Asynchronously sends a [file] to the specified [target]
   Future<DataSendResult> sendFile(SenderTarget target, File file) async {
     _logger.info("Sending File");
 
@@ -33,16 +34,18 @@ class LinkSender {
     );
   }
 
-  Future<DataSendResult> sendMap(SenderTarget target, Map<String, dynamic> data) async {
+  /// Asynchronously sends [json] to the specified [target]
+  Future<DataSendResult> sendMap(SenderTarget target, Map<String, dynamic> json) async {
     _logger.info("Sending Map");
 
     return _sendData(
       target,
-      _serializer.serializeMap(data),
+      _serializer.serializeMap(json),
       ContentPayloadTypes.json,
     );
   }
 
+  /// Asynchronously sends String [data] to the specified [target]
   Future<DataSendResult> sendString(SenderTarget target, String data) async {
     _logger.info("Sending String");
 
