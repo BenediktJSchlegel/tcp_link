@@ -1,39 +1,59 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages).
+This package provides functionality for TCP/IP communication between devices.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages).
--->
+Please refer to https://github.com/BenediktJSchlegel/tcp_link/tree/master/example for example usage.
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
 
-## Features
+## Basic Usage:
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+### Sending:
 
-## Getting started
+1. Initialize the Sender
+``` dart
+final sender = LinkSender(
+    loggingConfiguration: LoggingConfiguration.print(LoggingVerbosity.info),
+    configuration: SenderConfiguration("<SENDER_IP>", 10),
+);
+```
+2. Send some data
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
-```dart
-const like = 'sample';
+``` dart
+DataSendResult sendResult = await sender.sendString(SenderTarget("<TARGET_IP>", <PORT>), "This is my data!");
 ```
 
-## Additional information
+### Receiving:
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+1. Register and start the Receiver
+``` dart
+final receiver = LinkReceiver(
+    onTransferPermissionRequestedCallback: (request) => _onHandshakeReceived(request),
+    loggingConfiguration: LoggingConfiguration.print(LoggingVerbosity.info),
+    config: LinkConfiguration(ip: "<IP>", port: <PORT>, bufferPath: "<PATH_TO_BUFFER_TO>"),
+);
+
+receiver.start();
+```
+2. Define the Handshake-Callback. This will handle the receiving of data once a handshake is accepted.
+``` dart 
+  Future<void> _onHandshakeReceived(PermissionRequest request) async{
+    request.accept().listen((event) {
+      switch (event.runtimeType) {
+        case ProgressReceiveEvent:
+          print("Made Progress!");
+          break;
+        case FailedReceiveEvent:
+          print("Failed");
+          break;
+        case DoneReceiveEvent:
+          print("Finished");
+          break;
+      }
+    });
+  }
+```
+
+<img alt="img_1.png" height="500" src="img_1.png"/>
+
+<img alt="img_2.png" height="500" src="img_2.png"/>
+
+<img alt="img_3.png" height="500" src="img_3.png"/>
