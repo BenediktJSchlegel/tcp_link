@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:io' show Platform;
-import 'package:example_1/utils.dart';
 import 'package:intl/intl.dart';
 
-import 'package:example_1/received_list_item.dart';
+import 'received_list_item.dart';
+import 'utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
