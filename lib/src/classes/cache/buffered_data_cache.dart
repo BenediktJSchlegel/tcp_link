@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:path/path.dart' as Path;
+import 'package:path/path.dart' as path;
 import 'package:tcp_link/src/classes/cache/data_cache.dart';
 import 'package:tcp_link/src/stream/receive/progress_receive_event.dart';
 
@@ -26,7 +26,7 @@ class BufferedDataCache extends DataCache {
     Completer<IOSink> completer = Completer();
     _sink = completer.future;
 
-    _filePath = Path.join(
+    _filePath = path.join(
       bufferDir,
       handshake.timestamp.toIso8601String(),
       handshake.filename,

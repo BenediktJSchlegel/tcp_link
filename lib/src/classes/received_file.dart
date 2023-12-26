@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 class ReceivedFile {
   final String _tempFilePath;
   final String _filename;

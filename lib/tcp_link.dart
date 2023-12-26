@@ -18,7 +18,6 @@ export 'src/stream/receive/receive_event.dart';
 export 'src/classes/permission_request.dart';
 export 'src/classes/completed_data.dart';
 
-export 'src/exceptions/tcp_link_exception.dart';
 export 'src/exceptions/failed_sending_data_exception.dart';
 export 'src/exceptions/failed_sending_handshake_exception.dart';
 export 'src/exceptions/handshake_ignored_exception.dart';

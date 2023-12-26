@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -24,8 +23,9 @@ class DataCollector {
   Future<void> prime(
       HandshakePayload payload, Socket socket, StreamController<ReceiveEvent> controller) async {
     if (_caches.containsKey(payload.senderIp)) {
-      // TODO throw better ex
-      throw Exception();
+      // Cache is already initialized. This is very likely an error and should not happen!
+      // TODO: LOG
+      return;
     }
 
     if (payload.type == ContentPayloadTypes.file) {
@@ -40,6 +40,8 @@ class DataCollector {
       await bufferedCache.open(_bufferDir);
 
       _caches[payload.senderIp] = bufferedCache;
+
+      // TODO: LOG
     } else {
       _caches[payload.senderIp] = DataCache(
         payload,
@@ -48,6 +50,8 @@ class DataCollector {
         _closeCache,
         _inactivityThreshold,
       );
+
+      // TODO: LOG
     }
   }
 
@@ -56,14 +60,17 @@ class DataCollector {
       return;
     }
 
+    // TODO: LOG
     await _caches[ip]!.addData(data);
 
     if (_caches[ip]!.isComplete) {
+      // TODO: LOG
       _closeCache(_caches[ip]!, DoneReceiveEvent(_prepareData(_caches[ip]!)));
     }
   }
 
   void _closeCache(DataCache cache, ReceiveEvent event) {
+    // TODO: LOG
     cache.controller.add(event);
     cache.close();
 
@@ -71,12 +78,14 @@ class DataCollector {
   }
 
   void _eject(String ip) {
+    // TODO: LOG
     _caches.removeWhere((key, value) => key == ip);
   }
 
   bool containsIp(String ip) => _caches.containsKey(ip);
 
   CompletedData _prepareData(DataCache cache) {
+    // TODO: LOG
     switch (cache.handshake.type) {
       case ContentPayloadTypes.string:
         return CompletedStringData(utf8.decode(cache.bytes));

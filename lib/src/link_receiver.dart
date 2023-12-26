@@ -1,7 +1,5 @@
-import 'package:tcp_link/src/classes/completed_data.dart';
 import 'package:tcp_link/src/classes/data_collector.dart';
 import 'package:tcp_link/src/classes/permission_request.dart';
-import 'package:tcp_link/src/classes/received_file.dart';
 import 'package:tcp_link/src/classes/transfer_permission_handler.dart';
 import 'package:tcp_link/src/configuration/link_configuration.dart';
 import 'package:tcp_link/src/connection/data_receiver.dart';
@@ -15,7 +13,7 @@ class LinkReceiver {
   final LinkLogger _logger;
   final TransferPermissionHandler _permissionHandler;
 
-  DataReceiver? _handshakeReceiver;
+  DataReceiver? _receiver;
   DataCollector? _dataCollector;
 
   LinkReceiver({
@@ -32,13 +30,13 @@ class LinkReceiver {
   }
 
   void stop() {
-    _handshakeReceiver?.close();
+    _receiver?.close();
   }
 
   void _startReceiving() {
     _dataCollector = DataCollector(_configuration.bufferPath, _configuration.inactivityThreshold);
 
-    _handshakeReceiver = DataReceiver(
+    _receiver = DataReceiver(
       _configuration.ip,
       _configuration.port,
       _serializer,
@@ -47,6 +45,6 @@ class LinkReceiver {
       _permissionHandler,
     );
 
-    _handshakeReceiver!.bind();
+    _receiver!.bind();
   }
 }

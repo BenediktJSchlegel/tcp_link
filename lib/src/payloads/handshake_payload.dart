@@ -1,8 +1,6 @@
-import 'package:tcp_link/src/payloads/interfaces/payload.dart';
-
 import '../enums/content_payload_types.dart';
 
-class HandshakePayload implements Payload {
+class HandshakePayload {
   final String senderIp;
   final ContentPayloadTypes type;
   final String? filename;

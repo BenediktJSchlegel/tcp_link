@@ -92,31 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    final AlertDialog dialog = AlertDialog(
-      content: Text(
-          "Allow transfer from ${request.payload.senderIp}? Name: ${request.payload.filename} - Length: ${request.payload.contentLength}"),
-      icon: const Icon(Icons.file_copy),
-      actions: [
-        TextButton(
-          child: const Text("No"),
-          onPressed: () {
-            Navigator.pop(context);
-
-            request.reject();
-          },
-        ),
-        TextButton(
-          child: const Text("Yes"),
-          onPressed: () {
-            Navigator.pop(context);
-
-            _acceptTransfer(request.accept.call());
-          },
-        ),
-      ],
-    );
-
-    showDialog(context: context, builder: (_) => dialog);
+    Utils(context).showHandshakeDialog(request, _acceptTransfer);
   }
 
   void _acceptTransfer(Stream<ReceiveEvent> stream) {
@@ -149,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Navigator.of(context).pop();
           }
 
-          _showErrorDialog();
+          Utils(context).showErrorDialog();
           break;
         case DoneReceiveEvent:
           _handleReceivedData((event as DoneReceiveEvent).data);
@@ -170,23 +146,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _isShowingAlert() {
     return !(ModalRoute.of(context)?.isCurrent ?? false);
-  }
-
-  void _showErrorDialog() {
-    final AlertDialog dialog = AlertDialog(
-      title: const Text("Failed Receiving Data"),
-      icon: const Icon(Icons.error),
-      actions: [
-        TextButton(
-          child: const Text("Ok"),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ],
-    );
-
-    showDialog(context: context, builder: (_) => dialog);
   }
 
   void _showProgressDialog() {

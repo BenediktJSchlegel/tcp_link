@@ -2,11 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:path/path.dart';
 
-import 'package:tcp_link/src/classes/data_send_result.dart';
-import 'package:tcp_link/src/classes/sender_target.dart';
-import 'package:tcp_link/src/configuration/sender_configuration.dart';
 import 'package:tcp_link/src/connection/data_sender.dart';
-import 'package:tcp_link/src/enums/content_payload_types.dart';
 import 'package:tcp_link/src/serialization/data_serializer.dart';
 import 'package:tcp_link/src/serialization/payload_serializer.dart';
 
